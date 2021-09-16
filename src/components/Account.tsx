@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import { useWeb3React } from "@web3-react/core";
 
-export function Account() {
+export function Account(): JSX.Element {
   const { account } = useWeb3React();
 
   return (

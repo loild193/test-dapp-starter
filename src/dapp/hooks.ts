@@ -1,10 +1,11 @@
+import { parseEther } from "@ethersproject/units";
 import { useWeb3React } from "@web3-react/core";
 import { useState, useEffect } from "react";
 
 import logger from "../logger";
 import { injected } from "./connectors";
 
-export function useEagerConnect() {
+export function useEagerConnect(): boolean {
   const { activate, active } = useWeb3React();
 
   const [tried, setTried] = useState(false);
@@ -31,10 +32,10 @@ export function useEagerConnect() {
   return tried;
 }
 
-export function useInactiveListener(suppress = false) {
+export function useInactiveListener(suppress = false): void {
   const { active, error, activate } = useWeb3React();
 
-  useEffect((): any => {
+  useEffect(() => {
     const { ethereum } = window as any;
     if (ethereum && ethereum.on && !active && !error && !suppress) {
       const handleConnect = () => {
@@ -71,4 +72,29 @@ export function useInactiveListener(suppress = false) {
       };
     }
   }, [active, error, suppress, activate]);
+}
+
+// transaction
+export function useSendTransaction() {
+  const { account, library, active } = useWeb3React();
+  const signerAcc = library?.getSigner(account);
+
+  const sendTransaction = async (toAccount: string, amountInWei: string, chainId: number): Promise<unknown> => {
+    if (active && signerAcc) {
+      try {
+        const res = await signerAcc.sendTransaction({
+          from: account,
+          to: toAccount,
+          chainId,
+          value: parseEther(amountInWei),
+        });
+
+        return res;
+      } catch (error) {
+        return error;
+      }
+    }
+  };
+
+  return sendTransaction;
 }

@@ -1,5 +1,6 @@
-import { Web3Provider } from "@ethersproject/providers";
-import { useWeb3React, UnsupportedChainIdError } from "@web3-react/core";
+import { getDefaultProvider, Web3Provider } from "@ethersproject/providers";
+import { parseEther } from "@ethersproject/units";
+import { UnsupportedChainIdError, useWeb3React } from "@web3-react/core";
 import {
   NoEthereumProviderError,
   UserRejectedRequestError as UserRejectedRequestErrorInjected,
@@ -7,8 +8,8 @@ import {
 import { UserRejectedRequestError as UserRejectedRequestErrorWalletConnect } from "@web3-react/walletconnect-connector";
 import { useEffect, useState } from "react";
 
-import { injected, walletconnect, POLLING_INTERVAL } from "../dapp/connectors";
-import { useEagerConnect, useInactiveListener } from "../dapp/hooks";
+import { injected, POLLING_INTERVAL, walletconnect } from "../dapp/connectors";
+import { useEagerConnect, useInactiveListener, useSendTransaction } from "../dapp/hooks";
 import logger from "../logger";
 import { Header } from "./Header";
 
@@ -26,18 +27,21 @@ function getErrorMessage(error: Error) {
   return "An unknown error occurred. Check the console for more details.";
 }
 
-export function getLibrary(provider: any): Web3Provider {
+export function getLibrary(provider: unknown): Web3Provider {
   const library = new Web3Provider(provider);
   library.pollingInterval = POLLING_INTERVAL;
   return library;
 }
 
-export default function Demo() {
+export default function Demo(): JSX.Element {
   const context = useWeb3React<Web3Provider>();
   const { connector, library, account, activate, deactivate, active, error } = context;
 
+  // transaction
+  const sendTransaction = useSendTransaction();
+
   // handle logic to recognize the connector currently being activated
-  const [activatingConnector, setActivatingConnector] = useState<any>();
+  const [activatingConnector, setActivatingConnector] = useState<unknown>();
   useEffect(() => {
     if (activatingConnector && activatingConnector === connector) {
       setActivatingConnector(undefined);
@@ -53,6 +57,15 @@ export default function Demo() {
   const activating = (connection: typeof injected | typeof walletconnect) => connection === activatingConnector;
   const connected = (connection: typeof injected | typeof walletconnect) => connection === connector;
   const disabled = !triedEager || !!activatingConnector || connected(injected) || connected(walletconnect) || !!error;
+
+  const handleTransaction = async () => {
+    const toAccount = "0x5Ac6B04A2E473718127e5eC72dF4d263729E926d";
+    const amountInWei = "0.01";
+    const chainId = 3;
+    const response = await sendTransaction(toAccount, amountInWei, chainId);
+    console.log(response);
+  };
+
   return (
     <>
       <Header />
@@ -196,6 +209,11 @@ export default function Demo() {
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <button type="button" className="btn btn-primary" onClick={handleTransaction}>
+          Transaction
+        </button>
       </div>
     </>
   );

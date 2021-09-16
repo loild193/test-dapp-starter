@@ -5,7 +5,7 @@ import { Account } from "./Account";
 import { Balance } from "./Balance";
 import { ChainId } from "./ChainId";
 
-export function Header() {
+export function Header(): JSX.Element {
   const { active, error } = useWeb3React();
 
   return (
